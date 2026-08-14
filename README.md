@@ -24,6 +24,8 @@ Or install/update with the package installer:
 npx pi-cmux
 ```
 
+Pi 0.80.5 or later is required.
+
 If Pi is already running:
 
 ```text
@@ -34,8 +36,8 @@ If Pi is already running:
 
 | Workflow | Commands | Summary |
 |---|---|---|
-| Notifications | automatic | Sends `cmux notify` when Pi waits, completes work, or errors. |
-| Sidebar status/log | automatic | Updates cmux status, progress, logs, and surface flash while Pi runs. |
+| Notifications | automatic | Sends `cmux notify` after Pi fully settles with a wait, completion, or error state. |
+| Sidebar status/log | automatic | Updates live cmux state, then shows the final state after Pi fully settles. |
 | Split Pi | `/cmv [prompt]`, `/cmh [prompt]` | Opens a new right/lower split with Pi in the same project. |
 | Run a tool | `/cmo <cmd>`, `/cmoh <cmd>`, `/cmt <cmd>` | Opens a split or tab and runs a shell command in the same project. |
 | Pluggable tools | custom `/<name>` | Registers cmux split shortcuts from `pi-cmux.commands` settings. |

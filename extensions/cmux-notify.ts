@@ -234,6 +234,7 @@ export default function cmuxNotifyExtension(pi: ExtensionAPI) {
 	let lastNotificationAt = 0;
 	let lastNotificationKey = "";
 	let cmuxUnavailable = false;
+	let pendingMessages: readonly unknown[] | undefined;
 
 	const sendNotification = async (subtitle: string, body: string): Promise<{ ok: boolean; error?: string }> => {
 		if (cmuxUnavailable) {
@@ -264,8 +265,13 @@ export default function cmuxNotifyExtension(pi: ExtensionAPI) {
 		return { ok: true };
 	};
 
-	pi.on("agent_start", async () => {
+	pi.on("before_agent_start", async () => {
+		// Automatic retries emit agent_start again, so reset state at the top-level prompt boundary.
 		runState = createEmptyRunState();
+	});
+
+	pi.on("agent_start", async () => {
+		pendingMessages = undefined;
 	});
 
 	pi.on("tool_result", async (event) => {
@@ -296,8 +302,16 @@ export default function cmuxNotifyExtension(pi: ExtensionAPI) {
 	});
 
 	pi.on("agent_end", async (event) => {
+		pendingMessages = event.messages;
+	});
+
+	pi.on("agent_settled", async () => {
+		const messages = pendingMessages;
+		pendingMessages = undefined;
+		if (!messages) return;
+
 		const durationMs = Date.now() - runState.startedAt;
-		const runError = summarizeRunError(event.messages, runState.firstToolError);
+		const runError = summarizeRunError(messages, runState.firstToolError);
 		const subtitle = buildSubtitle(Boolean(runError), runState, durationMs, thresholdMs);
 		if (!shouldNotify(notifyLevel, subtitle)) {
 			return;
@@ -305,7 +319,7 @@ export default function cmuxNotifyExtension(pi: ExtensionAPI) {
 		let body = runError || summarizeSuccess(runState, durationMs, thresholdMs);
 
 		if (!runError && includeAssistantResponse) {
-			const responseText = getAssistantResponseText(event.messages);
+			const responseText = getAssistantResponseText(messages);
 			if (responseText) {
 				body = `${body}\n${responseText}`;
 			}

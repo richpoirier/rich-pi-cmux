@@ -4,7 +4,7 @@ Detailed usage for the cmux integrations bundled with `pi-cmux`.
 
 ## Notifications
 
-`cmux-notify` sends `cmux notify` alerts when Pi finishes a run.
+`cmux-notify` sends `cmux notify` alerts after Pi fully settles. It waits for retries, automatic compaction, and queued continuations.
 
 Notification fields:
 - title: `Pi` by default
@@ -37,7 +37,7 @@ It uses:
 - `cmux set-status` for a temporary Pi status pill while Pi is running, using tools, waiting, done, or errored
 - `cmux set-progress` for coarse run progress and live token counts while Pi is active
 - `cmux log` for run starts, changed files, warnings, final summaries, and compact session token counts, with cached input split out
-- `cmux trigger-flash` when a run finishes and the surface needs attention
+- `cmux trigger-flash` after Pi fully settles and the surface needs attention
 
 Environment settings:
 

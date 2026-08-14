@@ -478,6 +478,7 @@ export default function cmuxSidebarExtension(pi: ExtensionAPI) {
 	let currentProgressValue: number | undefined;
 	let currentProgressLabel: string | undefined;
 	let lastTokenProgressUpdateAt = 0;
+	let pendingMessages: readonly unknown[] | undefined;
 
 	const markCmuxUnavailableIfFatal = (text: string): void => {
 		if (isCmuxUnavailableError(text)) {
@@ -611,28 +612,32 @@ export default function cmuxSidebarExtension(pi: ExtensionAPI) {
 		latestTokenSummary = undefined;
 		agentActive = false;
 		activeToolCount = 0;
+		pendingMessages = undefined;
 		clearProgress();
 		clearStatus();
 	});
 
 	pi.on("before_agent_start", async (event) => {
 		pendingPrompt = event.prompt ? truncateText(event.prompt, MAX_PROMPT_LENGTH) : undefined;
+		// Automatic retries emit agent_start again, so reset state at the top-level prompt boundary.
+		runState = createEmptyRunState(pendingPrompt);
 	});
 
 	pi.on("agent_start", async (_event, ctx) => {
 		runSequence += 1;
 		agentActive = true;
 		cancelFinalClear();
-		runState = createEmptyRunState(pendingPrompt);
+		const prompt = pendingPrompt;
 		pendingPrompt = undefined;
 		tokenBaseTotals = tokenTrackingEnabled ? getBranchTokenTotals(ctx.sessionManager.getBranch()) : createEmptyTokenTotals();
 		tokenRunTotals = createEmptyTokenTotals();
 		liveAssistantUsage = undefined;
 		activeToolCount = 0;
+		pendingMessages = undefined;
 		updateLatestTokenSummary(tokenBaseTotals);
 		setStatus("running", "Pi running");
 		setProgress(0.08, "Starting");
-		appendLog("progress", includePromptInLog && runState.prompt ? `Started: ${runState.prompt}` : "Run started");
+		appendLog("progress", includePromptInLog && prompt ? `Started: ${prompt}` : "Run started");
 	});
 
 	pi.on("turn_start", async (event) => {
@@ -713,12 +718,20 @@ export default function cmuxSidebarExtension(pi: ExtensionAPI) {
 	pi.on("agent_end", async (event) => {
 		agentActive = false;
 		activeToolCount = 0;
+		pendingMessages = event.messages;
+	});
+
+	pi.on("agent_settled", async () => {
+		const messages = pendingMessages;
+		pendingMessages = undefined;
+		if (!messages) return;
+
 		const durationMs = Date.now() - runState.startedAt;
-		const failure = summarizeRunFailure(event.messages, runState.firstToolError);
+		const failure = summarizeRunFailure(messages, runState.firstToolError);
 		const finalState = buildFinalState(failure, runState, durationMs, thresholdMs);
 		const summary = failure?.summary || summarizeSuccess(runState, durationMs, thresholdMs);
 		if (tokenTrackingEnabled) {
-			tokenRunTotals = getSessionTokenTotals(event.messages);
+			tokenRunTotals = getSessionTokenTotals(messages);
 			liveAssistantUsage = undefined;
 			updateLatestTokenSummary(addTokenTotals(tokenBaseTotals, tokenRunTotals));
 		} else {
@@ -756,6 +769,7 @@ export default function cmuxSidebarExtension(pi: ExtensionAPI) {
 		runSequence += 1;
 		agentActive = false;
 		activeToolCount = 0;
+		pendingMessages = undefined;
 		cancelFinalClear();
 		clearProgress();
 		clearStatus();

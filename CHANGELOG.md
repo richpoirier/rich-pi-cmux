@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [0.1.17] - 2026-08-13
+
+### Changed
+
+- Wait for Pi's `agent_settled` event before notifications, final sidebar states, and surface flashes.
+- Require Pi 0.80.5 or later, which provides the settled lifecycle event.
+
+### Fixed
+
+- Prevent retryable provider errors, automatic compaction, and queued continuations from creating premature completion or error notifications.
+- Preserve file activity and elapsed time across retries until Pi fully settles.
+
 ## [0.1.16] - 2026-05-27
 
 ### Added

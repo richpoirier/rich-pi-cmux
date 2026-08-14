@@ -5,7 +5,7 @@
 This repository contains `pi-cmux`, a small Pi package that adds cmux-powered terminal workflows to Pi.
 
 Current extensions:
-- `extensions/cmux-notify.ts` — sends `cmux notify` alerts when Pi finishes, waits for input, or ends in an error/abort state
+- `extensions/cmux-notify.ts`: sends `cmux notify` alerts after Pi fully settles in a wait, completion, error, or abort state
 - `extensions/cmux-split.ts` — adds split commands that open a new cmux pane and start a fresh Pi session in the same working directory
 - `extensions/cmux-zoxide.ts` — adds zoxide-based split commands that jump to a matched directory and start Pi there
 
