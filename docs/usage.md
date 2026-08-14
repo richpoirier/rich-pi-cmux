@@ -1,6 +1,6 @@
-# pi-cmux usage
+# rich-pi-cmux usage
 
-Detailed usage for the cmux integrations bundled with `pi-cmux`.
+Detailed usage for the cmux integrations bundled with `rich-pi-cmux`.
 
 ## Notifications
 
@@ -55,7 +55,7 @@ PI_CMUX_SIDEBAR_STATUS_KEY=my-key    # override status key
 
 ## Split tab names
 
-Commands that spawn a split rename the new cmux tab/surface as `<title> · <repo-or-dir>`, using the git repo basename when available and the working-directory basename otherwise. Examples: `Pi · pi-cmux`, `Review · pi-cmux`, `Continue · fix-sidebar`, `npm test · pi-cmux`.
+Commands that spawn a split name the new tab `<title> · <repo-or-dir>`. Examples include `Pi · rich-pi-cmux` and `Review · rich-pi-cmux`.
 
 ## Split Pi sessions
 
@@ -108,7 +108,7 @@ Alias:
 
 ## Agent-opened terminals
 
-`pi-cmux` registers a `cmux_open_terminal` tool so Pi can open interactive terminal programs when explicitly asked.
+`rich-pi-cmux` registers a `cmux_open_terminal` tool for explicit interactive terminal requests.
 
 Example requests:
 
@@ -122,7 +122,7 @@ The tool supports `tab`, `right`, and `down` placements. It is meant for TUIs, l
 
 ## Pluggable tool commands
 
-Register custom split shortcuts in Pi settings under `pi-cmux.commands`.
+Register custom split shortcuts in Pi settings under `rich-pi-cmux.commands`.
 
 Supported locations:
 - `~/.pi/agent/settings.json` for global commands
@@ -132,7 +132,7 @@ Simple form:
 
 ```json
 {
-  "pi-cmux": {
+  "rich-pi-cmux": {
     "commands": {
       "edit": "hx",
       "logs": "tail -f logs/app.log"
@@ -154,7 +154,7 @@ Use object form for arguments, lower splits, custom tab titles, or descriptions:
 
 ```json
 {
-  "pi-cmux": {
+  "rich-pi-cmux": {
     "commands": {
       "edit": {
         "run": "hx",
@@ -187,7 +187,7 @@ Supported object keys:
 - `description` — optional slash-command description
 - `disabled` — set to `true` in project settings to remove a global configured command
 
-Configured command names cannot reuse built-in Pi commands such as `/settings`, `/model`, or `/reload`, and they cannot replace `pi-cmux` commands such as `/cmv`, `/cmo`, `/cmz`, `/cmrv`, or `/cmcv`.
+Configured names cannot reuse built-in Pi commands. They also cannot replace `rich-pi-cmux` commands such as `/cmv`, `/cmo`, `/cmz`, `/cmrv`, or `/cmcv`.
 
 If the same command exists in both global and project settings, the project setting wins. After changing settings, run `/reload` in Pi.
 
@@ -280,7 +280,7 @@ Legacy aliases:
 - `/review-v` → `/cmrv`
 - `/review-h` → `/cmrh`
 
-`pi-cmux` does not ship generic in-place `/review`, `/review-diff`, or `code-review` resources. Use those from another package if installed.
+`rich-pi-cmux` does not ship generic `/review`, `/review-diff`, or `code-review` resources. Use another package for those resources.
 
 ## Environment variables
 

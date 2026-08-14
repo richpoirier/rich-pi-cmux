@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.1.18] - 2026-08-14
+
+### Changed
+
+- Fork the package as `rich-pi-cmux` from `javiermolinar/pi-cmux`.
+
 ## [0.1.17] - 2026-08-13
 
 ### Changed

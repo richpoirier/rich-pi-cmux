@@ -1,28 +1,32 @@
 {
-  "name": "pi-cmux",
-  "version": "0.1.17",
-  "description": "Pi package with cmux-powered terminal integrations",
+  "name": "rich-pi-cmux",
+  "version": "0.1.18",
+  "description": "Maintained Pi package with cmux-powered terminal integrations",
   "author": "Javi Molina",
+  "contributors": [
+    "Richard Poirier <richard.poirier@shopify.com>"
+  ],
   "license": "MIT",
   "type": "module",
   "keywords": [
     "pi-package",
+    "rich-pi-cmux",
     "pi",
     "pi-coding-agent",
     "cmux",
     "terminal",
     "notifications"
   ],
-  "homepage": "https://github.com/javiermolinar/pi-cmux#readme",
+  "homepage": "https://github.com/richpoirier/rich-pi-cmux#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/javiermolinar/pi-cmux.git"
+    "url": "git+https://github.com/richpoirier/rich-pi-cmux.git"
   },
   "bugs": {
-    "url": "https://github.com/javiermolinar/pi-cmux/issues"
+    "url": "https://github.com/richpoirier/rich-pi-cmux/issues"
   },
   "bin": {
-    "pi-cmux": "install.mjs"
+    "rich-pi-cmux": "install.mjs"
   },
   "scripts": {
     "test": "node --test tests/*.test.ts",

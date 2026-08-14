@@ -3,7 +3,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 type Locale = "es" | "fr" | "pt-BR";
 type Params = Record<string, string | number>;
 
-const namespace = "pi-cmux";
+const namespace = "rich-pi-cmux";
 const localeChangedEvent = `${namespace}/i18n/localeChanged`;
 
 const fallback = {

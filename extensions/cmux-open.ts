@@ -12,7 +12,7 @@ import {
 import { onI18nLocaleChanged, t, type I18nKey } from "./i18n.ts";
 
 const GLOBAL_SETTINGS_PATH = join(homedir(), ".pi", "agent", "settings.json");
-const SETTINGS_SECTION_NAME = "pi-cmux";
+const SETTINGS_SECTION_NAME = "rich-pi-cmux";
 const RESERVED_COMMAND_NAMES = new Set([
 	"login",
 	"logout",
@@ -193,25 +193,25 @@ function readJsonFile(path: string): Record<string, unknown> | undefined {
 	try {
 		const parsed = JSON.parse(readFileSync(path, "utf8")) as unknown;
 		if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-			console.warn(`[pi-cmux] Ignoring non-object settings file: ${path}`);
+			console.warn(`[rich-pi-cmux] Ignoring non-object settings file: ${path}`);
 			return undefined;
 		}
 		return parsed as Record<string, unknown>;
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
-		console.warn(`[pi-cmux] Failed to read settings from ${path}: ${message}`);
+		console.warn(`[rich-pi-cmux] Failed to read settings from ${path}: ${message}`);
 		return undefined;
 	}
 }
 
-function readPiCmuxCommands(settingsPath: string): Record<string, unknown> {
+function readRichPiCmuxCommands(settingsPath: string): Record<string, unknown> {
 	const settings = readJsonFile(settingsPath);
 	const section = settings?.[SETTINGS_SECTION_NAME];
 	if (!section) {
 		return {};
 	}
 	if (typeof section !== "object" || Array.isArray(section)) {
-		console.warn(`[pi-cmux] Ignoring invalid \"${SETTINGS_SECTION_NAME}\" settings in ${settingsPath}`);
+		console.warn(`[rich-pi-cmux] Ignoring invalid \"${SETTINGS_SECTION_NAME}\" settings in ${settingsPath}`);
 		return {};
 	}
 
@@ -220,7 +220,7 @@ function readPiCmuxCommands(settingsPath: string): Record<string, unknown> {
 		return {};
 	}
 	if (typeof commands !== "object" || Array.isArray(commands)) {
-		console.warn(`[pi-cmux] Ignoring invalid \"${SETTINGS_SECTION_NAME}.commands\" settings in ${settingsPath}`);
+		console.warn(`[rich-pi-cmux] Ignoring invalid \"${SETTINGS_SECTION_NAME}.commands\" settings in ${settingsPath}`);
 		return {};
 	}
 
@@ -248,7 +248,7 @@ function normalizeSplitDirection(
 	}
 
 	console.warn(
-		`[pi-cmux] Skipping configured command /${commandName} with invalid direction from ${settingsPath}; expected \"right\" or \"down\"`,
+		`[rich-pi-cmux] Skipping configured command /${commandName} with invalid direction from ${settingsPath}; expected \"right\" or \"down\"`,
 	);
 	return undefined;
 }
@@ -259,14 +259,14 @@ function normalizeConfiguredSplitCommand(
 	settingsPath: string,
 ): ConfiguredSplitCommand | null | undefined {
 	if (!isValidCommandName(commandName)) {
-		console.warn(`[pi-cmux] Skipping invalid configured command name \"${commandName}\" from ${settingsPath}`);
+		console.warn(`[rich-pi-cmux] Skipping invalid configured command name \"${commandName}\" from ${settingsPath}`);
 		return undefined;
 	}
 
 	if (typeof value === "string") {
 		const run = value.trim();
 		if (!run) {
-			console.warn(`[pi-cmux] Skipping empty configured command /${commandName} from ${settingsPath}`);
+			console.warn(`[rich-pi-cmux] Skipping empty configured command /${commandName} from ${settingsPath}`);
 			return undefined;
 		}
 		return {
@@ -278,7 +278,7 @@ function normalizeConfiguredSplitCommand(
 	}
 
 	if (!value || typeof value !== "object" || Array.isArray(value)) {
-		console.warn(`[pi-cmux] Skipping invalid configured command /${commandName} from ${settingsPath}`);
+		console.warn(`[rich-pi-cmux] Skipping invalid configured command /${commandName} from ${settingsPath}`);
 		return undefined;
 	}
 
@@ -289,7 +289,7 @@ function normalizeConfiguredSplitCommand(
 
 	const run = typeof config.run === "string" ? config.run.trim() : "";
 	if (!run) {
-		console.warn(`[pi-cmux] Skipping configured command /${commandName} without a valid \"run\" value from ${settingsPath}`);
+		console.warn(`[rich-pi-cmux] Skipping configured command /${commandName} without a valid \"run\" value from ${settingsPath}`);
 		return undefined;
 	}
 
@@ -317,7 +317,7 @@ function loadConfiguredSplitCommands(cwd: string): Map<string, ConfiguredSplitCo
 	const settingsPaths = [GLOBAL_SETTINGS_PATH, join(cwd, ".pi", "settings.json")];
 
 	for (const settingsPath of settingsPaths) {
-		const commands = readPiCmuxCommands(settingsPath);
+		const commands = readRichPiCmuxCommands(settingsPath);
 		for (const [commandName, value] of Object.entries(commands)) {
 			const normalized = normalizeConfiguredSplitCommand(commandName, value, settingsPath);
 			if (normalized === null) {
@@ -466,7 +466,7 @@ function registerConfiguredSplitCommands(pi: ExtensionAPI): void {
 	for (const [commandName, config] of loadConfiguredSplitCommands(process.cwd())) {
 		const normalizedName = commandName.toLowerCase();
 		if (RESERVED_COMMAND_NAMES.has(normalizedName) || registeredConfiguredNames.has(normalizedName)) {
-			console.warn(`[pi-cmux] Skipping configured command /${commandName}: command already exists`);
+			console.warn(`[rich-pi-cmux] Skipping configured command /${commandName}: command already exists`);
 			continue;
 		}
 		registerConfiguredSplitCommand(pi, commandName, config);

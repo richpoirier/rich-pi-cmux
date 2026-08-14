@@ -1,27 +1,28 @@
-# pi-cmux
+# rich-pi-cmux
 
 <img width="1335" height="758" alt="Screenshot 2026-05-27 at 12 05 46" src="https://github.com/user-attachments/assets/27806213-60f9-4c30-84d4-4a331ea1484b" />
 
-[![CI](https://github.com/javiermolinar/pi-cmux/actions/workflows/ci.yml/badge.svg)](https://github.com/javiermolinar/pi-cmux/actions/workflows/ci.yml)
-[![npm version](https://img.shields.io/npm/v/pi-cmux.svg)](https://www.npmjs.com/package/pi-cmux)
+[![CI](https://github.com/richpoirier/rich-pi-cmux/actions/workflows/ci.yml/badge.svg)](https://github.com/richpoirier/rich-pi-cmux/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-Pi package with [cmux](https://www.cmux.dev)-powered terminal integrations for [Pi](https://pi.dev).
+`rich-pi-cmux` is Richard Poirier's maintained fork of [pi-cmux](https://github.com/javiermolinar/pi-cmux).
+
+It adds [cmux](https://www.cmux.dev)-powered terminal integrations for [Pi](https://pi.dev).
 
 ## What it adds
 
-`pi-cmux` keeps Pi terminal-native by delegating notifications, sidebar status, pane splits, tab naming, pluggable tool commands, directory jumps, review handoff, and continuation workflows to cmux.
+`rich-pi-cmux` keeps Pi terminal-native. It delegates notifications, sidebar status, pane splits, tab names, directory jumps, review handoff, and continuation workflows to cmux.
 
 ## Install
 
 ```bash
-pi install npm:pi-cmux
+pi install git:github.com/richpoirier/rich-pi-cmux
 ```
 
-Or install/update with the package installer:
+You can also install a local checkout:
 
 ```bash
-npx pi-cmux
+pi install /path/to/rich-pi-cmux
 ```
 
 Pi 0.80.5 or later is required.
@@ -40,7 +41,7 @@ If Pi is already running:
 | Sidebar status/log | automatic | Updates live cmux state, then shows the final state after Pi fully settles. |
 | Split Pi | `/cmv [prompt]`, `/cmh [prompt]` | Opens a new right/lower split with Pi in the same project. |
 | Run a tool | `/cmo <cmd>`, `/cmoh <cmd>`, `/cmt <cmd>` | Opens a split or tab and runs a shell command in the same project. |
-| Pluggable tools | custom `/<name>` | Registers cmux split shortcuts from `pi-cmux.commands` settings. |
+| Pluggable tools | custom `/<name>` | Registers cmux split shortcuts from `rich-pi-cmux.commands` settings. |
 | Jump directory | `/cmz <query>`, `/cmzh <query>` | Resolves a zoxide match or path, then opens Pi there. |
 | Continue task | `/cmcv [note]`, `/cmch [note]` | Opens a related handoff session in a split. |
 | Continue in worktree | `/cmcv -c <branch> [--from <ref>] [note]` | Creates a branch worktree and starts Pi there with handoff context. |
@@ -75,13 +76,13 @@ Detailed command examples: [docs/usage.md](docs/usage.md).
 | `PI_CMUX_SIDEBAR_COST` | `0` | Include reported model cost alongside token counts. |
 | `PI_CMUX_SIDEBAR_LOG_TOOLS` | `0` | Set `1` to log every tool result. |
 
-Custom split shortcuts can be registered under `pi-cmux.commands` in `~/.pi/agent/settings.json` or `.pi/settings.json`; see [docs/usage.md](docs/usage.md#pluggable-tool-commands).
+Register custom split shortcuts under `rich-pi-cmux.commands` in `~/.pi/agent/settings.json` or `.pi/settings.json`. See [docs/usage.md](docs/usage.md#pluggable-tool-commands).
 
 Example Hunk review shortcut:
 
 ```json
 {
-  "pi-cmux": {
+  "rich-pi-cmux": {
     "commands": {
       "ck": {
         "run": "hunk diff --agent-notes --watch",
@@ -95,7 +96,7 @@ Example Hunk review shortcut:
 
 Use `/ck` to open Hunk in a cmux split, add Hunk comments while reviewing, then ask Pi to read them.
 
-`pi-cmux` also exposes an agent tool so Pi can open an explicitly requested terminal command in a cmux split or tab. For example, asking "open k9s in a new tab" lets Pi open `k9s` without trying to capture the TUI through a shell command.
+`rich-pi-cmux` also exposes an agent tool for requested terminal commands. Pi can open `k9s` in a cmux tab without shell capture.
 
 cmux workspace/surface targeting uses `CMUX_WORKSPACE_ID` and `CMUX_SURFACE_ID` automatically. Sidebar integration only activates inside a cmux workspace.
 
@@ -103,4 +104,4 @@ cmux workspace/surface targeting uses `CMUX_WORKSPACE_ID` and `CMUX_SURFACE_ID` 
 
 Extensions: `cmux-notify`, `cmux-sidebar`, `cmux-split`, `cmux-open`, `cmux-zoxide`, `cmux-review`, `cmux-continue`.
 
-`pi-cmux` intentionally does not bundle generic review skills or prompt templates, so packages that provide `/review`, `/review-diff`, or `code-review` can own those names without conflicts.
+`rich-pi-cmux` does not bundle generic review skills or prompt templates. Other packages can own `/review`, `/review-diff`, and `code-review` without conflicts.

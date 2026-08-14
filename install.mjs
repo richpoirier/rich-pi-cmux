@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const PACKAGE_NAME = "pi-cmux";
+const PACKAGE_NAME = "rich-pi-cmux";
 const AGENT_DIR = path.join(os.homedir(), ".pi", "agent");
 const SETTINGS_PATH = path.join(AGENT_DIR, "settings.json");
 const LEGACY_EXTENSION_DIR = path.join(AGENT_DIR, "extensions", PACKAGE_NAME);
@@ -20,7 +20,7 @@ const isRemove = args.includes("--remove") || args.includes("-r");
 const isHelp = args.includes("--help") || args.includes("-h");
 
 function printHelp() {
-	console.log(`\n${PACKAGE_NAME}\n\nWhy:\n  pi-cmux adds cmux-powered terminal integrations to pi.\n\nUsage:\n  npx ${PACKAGE_NAME}          Install or update the extension package\n  npx ${PACKAGE_NAME} --remove Remove the installed extension package\n  npx ${PACKAGE_NAME} --help   Show this help\n`);
+	console.log(`\n${PACKAGE_NAME}\n\nWhy:\n  ${PACKAGE_NAME} adds cmux-powered terminal integrations to Pi.\n\nUsage:\n  npx ${PACKAGE_NAME}          Install or update the extension package\n  npx ${PACKAGE_NAME} --remove Remove the installed extension package\n  npx ${PACKAGE_NAME} --help   Show this help\n`);
 }
 
 function ensureDir(dir) {

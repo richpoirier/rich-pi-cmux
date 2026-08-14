@@ -119,7 +119,7 @@ function getStatusKey(): string {
 
 	const surfaceOrTab = process.env.CMUX_SURFACE_ID || process.env.CMUX_TAB_ID || String(process.pid);
 	const suffix = sanitizeStatusKeyPart(surfaceOrTab).slice(0, 64) || String(process.pid);
-	return `pi-cmux-${suffix}`;
+	return `rich-pi-cmux-${suffix}`;
 }
 
 function hasCmuxWorkspaceContext(): boolean {

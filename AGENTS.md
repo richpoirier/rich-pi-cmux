@@ -2,7 +2,7 @@
 
 ## Repo overview
 
-This repository contains `pi-cmux`, a small Pi package that adds cmux-powered terminal workflows to Pi.
+This repository contains `rich-pi-cmux`, Richard Poirier's maintained fork of `pi-cmux`.
 
 Current extensions:
 - `extensions/cmux-notify.ts`: sends `cmux notify` alerts after Pi fully settles in a wait, completion, error, or abort state
@@ -12,14 +12,14 @@ Current extensions:
 Other important files:
 - `README.md` — user-facing package documentation
 - `CHANGELOG.md` — unreleased and released changes
-- `install.mjs` — installer/removal entrypoint used by `npx pi-cmux`
+- `install.mjs` — installer/removal entrypoint used by `npx rich-pi-cmux`
 - `package.json` — package metadata for npm and Pi
 
 ## How the repo works
 
-- This is a TypeScript-based Pi package, but the repo currently does not include a local TypeScript toolchain or build step.
+- This TypeScript package uses a local TypeScript dev dependency and Node's test runner.
 - Extensions are loaded from `./extensions` via the `pi.extensions` entry in `package.json`.
-- The package is published to npm and installed in Pi via `pi install npm:pi-cmux` or `npx pi-cmux`.
+- Install the package through GitHub or a local path until an npm release exists.
 
 ## Editing guidelines
 
@@ -27,6 +27,7 @@ Other important files:
 - Update `CHANGELOG.md` for user-visible changes.
 - Prefer small, focused edits.
 - Preserve the existing style: concise docs, simple utilities, minimal dependencies.
+- Keep the existing `PI_CMUX_*` variables and `/cm*` commands compatible.
 
 ## Release / push checklist
 
@@ -38,5 +39,5 @@ Before pushing changes:
 
 ## Notes for future agents
 
-- There is currently no local `tsc` dependency in this repo, so TypeScript validation may not be available unless TypeScript is installed separately.
+- Run `npm run typecheck` with the repository's local TypeScript dependency.
 - If you change publishable package metadata or release behavior, check `package.json`, `README.md`, and `CHANGELOG.md` together.
