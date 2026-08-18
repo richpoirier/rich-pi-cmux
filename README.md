@@ -38,7 +38,7 @@ If Pi is already running:
 | Workflow | Commands | Summary |
 |---|---|---|
 | Notifications | automatic | Sends `cmux notify` after Pi fully settles with a wait, completion, or error state. |
-| Sidebar status/log | automatic | Updates live cmux state, then shows the final state after Pi fully settles. |
+| Sidebar status/log | automatic | Updates live cmux state, then shows the final state after Pi settles or OMP emits a terminal `agent_end`. |
 | Split Pi | `/cmv [prompt]`, `/cmh [prompt]` | Opens a new right/lower split with Pi in the same project. |
 | Run a tool | `/cmo <cmd>`, `/cmoh <cmd>`, `/cmt <cmd>` | Opens a split or tab and runs a shell command in the same project. |
 | Pluggable tools | custom `/<name>` | Registers cmux split shortcuts from `rich-pi-cmux.commands` settings. |

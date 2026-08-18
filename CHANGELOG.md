@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.1.19] - 2026-08-18
+
+### Fixed
+
+- Finalize cmux sidebar status and progress from OMP's terminal `agent_end` event so completed OMP turns no longer remain at `Thinking`; automatic continuations marked by `willContinue` stay active.
+
 ## [0.1.18] - 2026-08-14
 
 ### Changed

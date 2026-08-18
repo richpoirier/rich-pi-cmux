@@ -39,6 +39,8 @@ It uses:
 - `cmux log` for run starts, changed files, warnings, final summaries, and compact session token counts, with cached input split out
 - `cmux trigger-flash` after Pi fully settles and the surface needs attention
 
+Pi finalizes sidebar state from `agent_settled`. OMP finalizes from terminal `agent_end` events and leaves automatic continuations active when `willContinue` is true.
+
 Environment settings:
 
 ```bash
