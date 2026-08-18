@@ -197,3 +197,43 @@ test("sidebar waits for settlement before its final state", async () => {
 	await harness.emit("session_shutdown", { reason: "quit" });
 	await drainQueuedCommands();
 });
+
+test("sidebar finalizes from OMP agent_end without breaking retries", async () => {
+	process.env.CMUX_WORKSPACE_ID = "workspace-test";
+	delete process.env.PI_CMUX_SIDEBAR_COMPLETE_THRESHOLD_MS;
+	process.env.PI_CMUX_SIDEBAR_FINAL_CLEAR_MS = "60000";
+	process.env.PI_CMUX_SIDEBAR_FLASH = "disabled";
+	process.env.PI_CMUX_SIDEBAR_TOKENS = "0";
+	const harness = createHarness();
+	cmuxSidebarExtension(harness.pi);
+
+	await harness.emit("session_start", { reason: "startup" });
+	await harness.emit("before_agent_start", { prompt: "Update the file" });
+	await harness.emit("agent_start");
+	await harness.emit("turn_start", { turnIndex: 0 });
+	await harness.emit("tool_result", successfulWrite("/tmp/omp-settle.ts"));
+	await drainQueuedCommands();
+	harness.execCalls.length = 0;
+
+	await harness.emit("agent_end", {
+		messages: [assistantMessage("error", "retryable stream failure")],
+		willContinue: true,
+	});
+	await drainQueuedCommands();
+	assert.equal(harness.execCalls.length, 0);
+
+	await harness.emit("agent_start");
+	await drainQueuedCommands();
+	harness.execCalls.length = 0;
+
+	await harness.emit("agent_end", { messages: [assistantMessage("stop")], willContinue: undefined });
+	await drainQueuedCommands();
+	assert.ok(
+		harness.execCalls.some(
+			(call) => call.args[0] === "set-progress" && call.args[1] === "1.00" && call.args.includes("Done"),
+		),
+	);
+
+	await harness.emit("session_shutdown", { reason: "quit" });
+	await drainQueuedCommands();
+});

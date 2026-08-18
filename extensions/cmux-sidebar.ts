@@ -719,9 +719,12 @@ export default function cmuxSidebarExtension(pi: ExtensionAPI) {
 		agentActive = false;
 		activeToolCount = 0;
 		pendingMessages = event.messages;
+		// OMP always supplies the willContinue key; Pi omits it and emits agent_settled instead.
+		const ompEvent = event as typeof event & { willContinue?: boolean };
+		if (Object.hasOwn(ompEvent, "willContinue") && ompEvent.willContinue !== true) finalizeRun();
 	});
 
-	pi.on("agent_settled", async () => {
+	function finalizeRun(): void {
 		const messages = pendingMessages;
 		pendingMessages = undefined;
 		if (!messages) return;
@@ -763,7 +766,9 @@ export default function cmuxSidebarExtension(pi: ExtensionAPI) {
 		}
 
 		scheduleFinalClear(runSequence);
-	});
+	}
+
+	pi.on("agent_settled", finalizeRun);
 
 	pi.on("session_shutdown", async () => {
 		runSequence += 1;
