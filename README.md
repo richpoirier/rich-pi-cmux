@@ -71,8 +71,7 @@ Detailed command examples: [docs/usage.md](docs/usage.md).
 | `PI_CMUX_NOTIFY_THRESHOLD_MS` | `15000` | Duration threshold for `Task Complete` vs `Waiting`. |
 | `PI_CMUX_SIDEBAR` | `1` | Set `0` to disable sidebar integration. |
 | `PI_CMUX_SIDEBAR_FLASH` | `all` | `all`, `error`, or `disabled`. |
-| `PI_CMUX_SIDEBAR_PROGRESS` | `1` | Set `0` to disable sidebar progress updates. |
-| `PI_CMUX_SIDEBAR_TOKENS` | `1` | Include compact live cumulative session token counts in sidebar progress and summaries. |
+| `PI_CMUX_SIDEBAR_TOKENS` | `1` | Include compact cumulative session token counts in final sidebar summaries. |
 | `PI_CMUX_SIDEBAR_COST` | `0` | Include reported model cost alongside token counts. |
 | `PI_CMUX_SIDEBAR_LOG_TOOLS` | `0` | Set `1` to log every tool result. |
 

@@ -1,6 +1,6 @@
 {
   "name": "rich-pi-cmux",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "description": "Maintained Pi package with cmux-powered terminal integrations",
   "author": "Javi Molina",
   "contributors": [

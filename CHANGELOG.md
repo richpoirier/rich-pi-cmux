@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [0.1.19] - 2026-08-19
+
+### Changed
+
+- Removed inaccurate cmux sidebar progress bars. Status pills, logs, final token summaries, and attention flashes remain.
+- Clear stale progress state when a Pi session starts or shuts down.
+
 ## [0.1.18] - 2026-08-14
 
 ### Changed

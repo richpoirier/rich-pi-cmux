@@ -15,7 +15,6 @@ const CMUX_SIDEBAR_TIMEOUT_MS = 1500;
 const MAX_LOG_LENGTH = 240;
 const MAX_PROMPT_LENGTH = 120;
 const DEFAULT_STATUS_PRIORITY = 80;
-const TOKEN_PROGRESS_UPDATE_MIN_MS = 500;
 
 type StatusKind = "running" | "tool" | "waiting" | "complete" | "cancelled" | "error";
 type LogLevel = "info" | "progress" | "success" | "warning" | "error";
@@ -29,8 +28,6 @@ interface RunState {
 	searchCount: number;
 	listCount: number;
 	bashCount: number;
-	toolCount: number;
-	turnCount: number;
 	firstToolError: string | undefined;
 }
 
@@ -135,8 +132,6 @@ function createEmptyRunState(prompt?: string): RunState {
 		searchCount: 0,
 		listCount: 0,
 		bashCount: 0,
-		toolCount: 0,
-		turnCount: 0,
 		firstToolError: undefined,
 	};
 }
@@ -408,15 +403,6 @@ function buildFinalState(
 	return "waiting";
 }
 
-function estimateProgress(state: RunState): number {
-	const progress = 0.08 + state.turnCount * 0.14 + state.toolCount * 0.04;
-	return Math.min(0.9, Math.max(0.08, progress));
-}
-
-function progressValue(value: number): string {
-	return Math.min(1, Math.max(0, value)).toFixed(2);
-}
-
 function shouldFlash(level: FlashLevel, isError: boolean): boolean {
 	if (level === "disabled") return false;
 	if (level === "error") return isError;
@@ -451,7 +437,6 @@ export default function cmuxSidebarExtension(pi: ExtensionAPI) {
 		"PI_CMUX_SIDEBAR_COMPLETE_THRESHOLD_MS",
 		getNumberFromEnv("PI_CMUX_NOTIFY_THRESHOLD_MS", DEFAULT_COMPLETE_THRESHOLD_MS),
 	);
-	const progressEnabled = getBooleanFromEnv("PI_CMUX_SIDEBAR_PROGRESS", true);
 	const tokenTrackingEnabled = getBooleanFromEnv("PI_CMUX_SIDEBAR_TOKENS", true);
 	const includeTokenCost = getBooleanFromEnv("PI_CMUX_SIDEBAR_COST", false);
 	const toolLogsEnabled = getBooleanFromEnv("PI_CMUX_SIDEBAR_LOG_TOOLS", false);
@@ -471,13 +456,7 @@ export default function cmuxSidebarExtension(pi: ExtensionAPI) {
 	let commandQueue = Promise.resolve();
 	let finalClearTimeout: ReturnType<typeof setTimeout> | undefined;
 	let tokenBaseTotals = createEmptyTokenTotals();
-	let tokenRunTotals = createEmptyTokenTotals();
-	let liveAssistantUsage: TokenUsageLike | undefined;
-	let latestTokenSummary: string | undefined;
 	let activeToolCount = 0;
-	let currentProgressValue: number | undefined;
-	let currentProgressLabel: string | undefined;
-	let lastTokenProgressUpdateAt = 0;
 	let pendingMessages: readonly unknown[] | undefined;
 
 	const markCmuxUnavailableIfFatal = (text: string): void => {
@@ -536,45 +515,7 @@ export default function cmuxSidebarExtension(pi: ExtensionAPI) {
 		enqueueCmux(["log", "--level", level, "--source", source, "--", truncateText(message, MAX_LOG_LENGTH)]);
 	};
 
-	const getCurrentTokenTotals = (): TokenTotals => {
-		const totals = addTokenTotals(tokenBaseTotals, tokenRunTotals);
-		addTokenUsage(totals, liveAssistantUsage);
-		return totals;
-	};
-
-	const updateLatestTokenSummary = (totals: TokenTotals): void => {
-		latestTokenSummary = tokenTrackingEnabled ? formatTokenSummary(totals, includeTokenCost) : undefined;
-	};
-
-	const buildProgressLabel = (label: string): string => {
-		return latestTokenSummary ? `${label} · ${latestTokenSummary}` : label;
-	};
-
-	const refreshProgressLabel = (force = false): void => {
-		if (!progressEnabled || currentProgressValue === undefined || currentProgressLabel === undefined) return;
-		const now = Date.now();
-		if (!force && now - lastTokenProgressUpdateAt < TOKEN_PROGRESS_UPDATE_MIN_MS) return;
-		lastTokenProgressUpdateAt = now;
-		enqueueCmux(["set-progress", progressValue(currentProgressValue), "--label", buildProgressLabel(currentProgressLabel)]);
-	};
-
-	const refreshTokenSummary = (force = false): void => {
-		updateLatestTokenSummary(getCurrentTokenTotals());
-		refreshProgressLabel(force);
-	};
-
-	const setProgress = (value: number, label: string): void => {
-		currentProgressValue = value;
-		currentProgressLabel = label;
-		if (!progressEnabled) return;
-		lastTokenProgressUpdateAt = Date.now();
-		enqueueCmux(["set-progress", progressValue(value), "--label", buildProgressLabel(label)]);
-	};
-
-	const clearProgress = (): void => {
-		currentProgressValue = undefined;
-		currentProgressLabel = undefined;
-		if (!progressEnabled) return;
+	const clearStaleProgress = (): void => {
 		enqueueCmux(["clear-progress"]);
 	};
 
@@ -596,7 +537,6 @@ export default function cmuxSidebarExtension(pi: ExtensionAPI) {
 		finalClearTimeout = setTimeout(() => {
 			finalClearTimeout = undefined;
 			if (sequence === runSequence) {
-				clearProgress();
 				clearStatus();
 			}
 		}, finalClearDelayMs);
@@ -607,13 +547,10 @@ export default function cmuxSidebarExtension(pi: ExtensionAPI) {
 		cancelFinalClear();
 		runState = createEmptyRunState();
 		tokenBaseTotals = createEmptyTokenTotals();
-		tokenRunTotals = createEmptyTokenTotals();
-		liveAssistantUsage = undefined;
-		latestTokenSummary = undefined;
 		agentActive = false;
 		activeToolCount = 0;
 		pendingMessages = undefined;
-		clearProgress();
+		clearStaleProgress();
 		clearStatus();
 	});
 
@@ -630,57 +567,34 @@ export default function cmuxSidebarExtension(pi: ExtensionAPI) {
 		const prompt = pendingPrompt;
 		pendingPrompt = undefined;
 		tokenBaseTotals = tokenTrackingEnabled ? getBranchTokenTotals(ctx.sessionManager.getBranch()) : createEmptyTokenTotals();
-		tokenRunTotals = createEmptyTokenTotals();
-		liveAssistantUsage = undefined;
 		activeToolCount = 0;
 		pendingMessages = undefined;
-		updateLatestTokenSummary(tokenBaseTotals);
 		setStatus("running", "Pi running");
-		setProgress(0.08, "Starting");
 		appendLog("progress", includePromptInLog && prompt ? `Started: ${prompt}` : "Run started");
 	});
 
 	pi.on("turn_start", async (event) => {
-		runState.turnCount = Math.max(runState.turnCount, event.turnIndex + 1);
 		setStatus("running", event.turnIndex > 0 ? `Pi turn ${event.turnIndex + 1}` : "Pi thinking");
-		setProgress(estimateProgress(runState), "Thinking");
 		if (toolLogsEnabled && event.turnIndex > 0) {
 			appendLog("progress", `Turn ${event.turnIndex + 1} started`);
 		}
 	});
 
-	pi.on("message_update", async (event) => {
-		if (!tokenTrackingEnabled || !isAssistantMessage(event.message) || !hasReportableUsage(event.message.usage)) return;
-		liveAssistantUsage = event.message.usage;
-		refreshTokenSummary();
-	});
-
-	pi.on("message_end", async (event) => {
-		if (!tokenTrackingEnabled || !isAssistantMessage(event.message)) return;
-		addTokenUsage(tokenRunTotals, event.message.usage);
-		liveAssistantUsage = undefined;
-		refreshTokenSummary(true);
-	});
-
 	pi.on("tool_execution_start", async (event) => {
 		activeToolCount += 1;
 		setStatus("tool", `Pi ${event.toolName}`);
-		setProgress(estimateProgress(runState), event.toolName);
 		if (toolLogsEnabled) {
 			appendLog("progress", summarizeToolStart(event.toolName, event.args));
 		}
 	});
 
 	pi.on("tool_result", async (event) => {
-		runState.toolCount += 1;
-
 		if (event.isError) {
 			const errorSummary = summarizeToolError(event);
 			if (!runState.firstToolError) {
 				runState.firstToolError = errorSummary;
 			}
 			appendLog("warning", errorSummary);
-			setProgress(estimateProgress(runState), "Tool warning");
 			return;
 		}
 
@@ -704,14 +618,12 @@ export default function cmuxSidebarExtension(pi: ExtensionAPI) {
 		if (toolLogsEnabled && !(isEditToolResult(event) || isWriteToolResult(event))) {
 			appendLog("info", summarizeToolResult(event));
 		}
-		setProgress(estimateProgress(runState), "Working");
 	});
 
 	pi.on("tool_execution_end", async () => {
 		activeToolCount = Math.max(0, activeToolCount - 1);
 		if (agentActive && activeToolCount === 0) {
 			setStatus("running", "Pi thinking");
-			setProgress(estimateProgress(runState), "Thinking");
 		}
 	});
 
@@ -733,34 +645,28 @@ export default function cmuxSidebarExtension(pi: ExtensionAPI) {
 		const failure = summarizeRunFailure(messages, runState.firstToolError);
 		const finalState = buildFinalState(failure, runState, durationMs, thresholdMs);
 		const summary = failure?.summary || summarizeSuccess(runState, durationMs, thresholdMs);
-		if (tokenTrackingEnabled) {
-			tokenRunTotals = getSessionTokenTotals(messages);
-			liveAssistantUsage = undefined;
-			updateLatestTokenSummary(addTokenTotals(tokenBaseTotals, tokenRunTotals));
-		} else {
-			latestTokenSummary = undefined;
-		}
-		const tokenSummary = latestTokenSummary;
+		const tokenSummary = tokenTrackingEnabled
+			? formatTokenSummary(
+				addTokenTotals(tokenBaseTotals, getSessionTokenTotals(messages)),
+				includeTokenCost,
+			)
+			: undefined;
 		const summaryWithUsage = tokenSummary ? `${summary} · ${tokenSummary}` : summary;
 
 		if (finalState === "error") {
 			setStatus("error", "Pi error");
-			setProgress(1, "Error");
 			appendLog("error", summaryWithUsage);
 			triggerFlash(true);
 		} else if (finalState === "cancelled") {
 			setStatus("cancelled", "Pi cancelled");
-			setProgress(1, "Cancelled");
 			appendLog("warning", summaryWithUsage);
 			triggerFlash(false);
 		} else if (finalState === "complete") {
 			setStatus("complete", "Pi done");
-			setProgress(1, "Done");
 			appendLog("success", summaryWithUsage);
 			triggerFlash(false);
 		} else {
 			setStatus("waiting", "Pi waiting");
-			setProgress(1, "Waiting");
 			appendLog("info", summaryWithUsage);
 			triggerFlash(false);
 		}
@@ -776,7 +682,7 @@ export default function cmuxSidebarExtension(pi: ExtensionAPI) {
 		activeToolCount = 0;
 		pendingMessages = undefined;
 		cancelFinalClear();
-		clearProgress();
+		clearStaleProgress();
 		clearStatus();
 		await flushCmux();
 	});

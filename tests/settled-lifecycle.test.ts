@@ -18,6 +18,7 @@ const managedEnvironment = [
 	"PI_CMUX_SIDEBAR_COMPLETE_THRESHOLD_MS",
 	"PI_CMUX_SIDEBAR_FINAL_CLEAR_MS",
 	"PI_CMUX_SIDEBAR_FLASH",
+	"PI_CMUX_SIDEBAR_PROGRESS",
 	"PI_CMUX_SIDEBAR_TOKENS",
 ] as const;
 
@@ -141,6 +142,38 @@ test("notification reports an error after final settlement", async () => {
 	);
 });
 
+test("sidebar never renders progress bars while preserving status and logs", async () => {
+	process.env.CMUX_WORKSPACE_ID = "workspace-test";
+	process.env.PI_CMUX_SIDEBAR_FINAL_CLEAR_MS = "60000";
+	process.env.PI_CMUX_SIDEBAR_FLASH = "disabled";
+	process.env.PI_CMUX_SIDEBAR_PROGRESS = "1";
+	process.env.PI_CMUX_SIDEBAR_TOKENS = "0";
+	const harness = createHarness();
+	cmuxSidebarExtension(harness.pi);
+
+	await harness.emit("session_start", { reason: "startup" });
+	await harness.emit("before_agent_start", { prompt: "Update the file" });
+	await harness.emit("agent_start");
+	await harness.emit("turn_start", { turnIndex: 0 });
+	await harness.emit("tool_execution_start", { toolName: "write", args: { path: "/tmp/no-bars.ts" } });
+	await harness.emit("tool_result", successfulWrite("/tmp/no-bars.ts"));
+	await harness.emit("tool_execution_end", { toolName: "write" });
+	await harness.emit("agent_end", { messages: [assistantMessage("stop")] });
+	await harness.emit("agent_settled");
+	await harness.emit("session_shutdown", { reason: "quit" });
+	await drainQueuedCommands();
+
+	const commands = harness.execCalls.map((call) => call.args[0]);
+	assert.equal(commands.includes("set-progress"), false);
+	assert.equal(commands.includes("clear-progress"), true);
+	assert.ok(commands.includes("set-status"));
+	assert.ok(
+		harness.execCalls.some(
+			(call) => call.args[0] === "log" && call.args.includes("Updated no-bars.ts"),
+		),
+	);
+});
+
 test("sidebar waits for settlement before its final state", async () => {
 	process.env.CMUX_WORKSPACE_ID = "workspace-test";
 	delete process.env.PI_CMUX_SIDEBAR_COMPLETE_THRESHOLD_MS;
@@ -185,11 +218,6 @@ test("sidebar waits for settlement before its final state", async () => {
 	);
 	assert.ok(
 		harness.execCalls.some(
-			(call) => call.args[0] === "set-progress" && call.args[1] === "1.00" && call.args.includes("Done"),
-		),
-	);
-	assert.ok(
-		harness.execCalls.some(
 			(call) => call.args[0] === "log" && call.args.includes("Updated first-attempt.ts"),
 		),
 	);
@@ -230,7 +258,7 @@ test("sidebar finalizes from OMP agent_end without breaking retries", async () =
 	await drainQueuedCommands();
 	assert.ok(
 		harness.execCalls.some(
-			(call) => call.args[0] === "set-progress" && call.args[1] === "1.00" && call.args.includes("Done"),
+			(call) => call.args[0] === "set-status" && call.args.includes("Pi done"),
 		),
 	);
 
